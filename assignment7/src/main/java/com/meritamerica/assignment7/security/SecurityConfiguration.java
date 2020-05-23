@@ -2,51 +2,65 @@ package com.meritamerica.assignment7.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import com.meritamerica.assignment7.filters.JwtRequestFilter;
+
+@Configuration
 @EnableWebSecurity
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
 	@Autowired
-	UserDetailsService userDetailsService;
+	MyUserDetailsServices myUserDetailsServices;
+	
+	@Autowired
+	private JwtRequestFilter jwtRequestFilter;
+
 
 	@Override
 	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-		auth.userDetailsService(userDetailsService);
-		//		POST /authenticate/createUser
-		//		Creates a new User
-		//		Only administrator can call this
-		//		POST /authenticate
-		//		Takes username and password and returns a JWT Token if authentication is successful or an HTTP 401 if authentication fails
-		//		Anyone call this
+		auth.userDetailsService(myUserDetailsServices);
 
 	}
-
+//Authenticate is not working for permit all. stating forbidden and access denied when using postman
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		http.csrf().disable().authorizeRequests()
+		.antMatchers("/AccountHolders/**").hasAuthority("ADMIN")
+		.antMatchers("/Me/**").hasAuthority("ACCOUNTHOLDER")
+		.antMatchers(HttpMethod.POST,"/CDOffering").hasAuthority("ADMIN")
+		.antMatchers(HttpMethod.GET,"/CDOffering").hasAnyAuthority("ADMIN","ACCOUNTHOLDER")
+		.antMatchers("/authenticate/CreateUser").hasAuthority("ADMIN")
 		.antMatchers("/authenticate").permitAll()
-		.anyRequest().authenticated();
-		http.authorizeRequests().antMatchers("/").hasRole("Admin")
-		.antMatchers("/").hasRole("AccountHolder")
-		.antMatchers("/authenticate","/CDOffering").permitAll()
-		.and().formLogin();
-		;// Need the method calls we are going to use. 
-		//This is where we will define the paths the Admin and Accountholder can access.
+		.anyRequest().authenticated().and().
+				exceptionHandling().and().sessionManagement()
+		.sessionCreationPolicy(SessionCreationPolicy.STATELESS);//Spring Security wont create a session
+http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class); //we add in the filter that we created before the User/Pass authentication
 	}
 	
 	
 	@Override
 	@Bean
-	public AuthenticationManager authenticationManagerBean() throws Exception{
+	public AuthenticationManager authenticationManagerBean() throws Exception {
 		return super.authenticationManagerBean();
+		
 	}
+	
+	
+	    
+	        
+	
 
 	@Bean
 	public PasswordEncoder getPasswordEncoder() {

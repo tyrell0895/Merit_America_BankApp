@@ -13,13 +13,17 @@ import com.meritamerica.assignment7.models.Users;
 
 public class MyUserDetails implements UserDetails{
 	
-	private String userName;
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private String username;
 	private String password;
 	private boolean active;
 	private List<GrantedAuthority> authorities;
 
 	public  MyUserDetails(Users users) {
-		this.userName = users.getUserName();
+		this.username = users.getUsername();
 		this.password = users.getPassword();
 		this.active = users.isActive();
 		this.authorities = Arrays.stream(users.getRoles().split(","))
@@ -30,6 +34,11 @@ public class MyUserDetails implements UserDetails{
 	}
 	
 	public MyUserDetails() {}
+	
+	public  MyUserDetails(String username) {
+		this.username = username;
+	}
+
 	
 //All values are hard coded except User Name. 
 	@Override
@@ -47,7 +56,7 @@ public class MyUserDetails implements UserDetails{
 	@Override
 	public String getUsername() {
 
-		return userName;	
+		return username;	
 	}
 
 	@Override

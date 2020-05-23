@@ -57,6 +57,20 @@ public class AccountHolder implements Comparable <AccountHolder> {
 	@OneToMany(cascade = CascadeType.ALL)
 	@JoinColumn(name ="account_Id", referencedColumnName = "account_Id")
 	private List<CDAccount> cdAccounts;
+	
+	
+	@OneToOne(cascade = CascadeType.ALL)
+	@JoinColumn(name ="users_id",referencedColumnName = "users_id")
+	private Users users;
+	
+
+	public Users getUsers() {
+		return users;
+	}
+
+	public void setUser(Users users) {
+		this.users = users;
+	}
 
 	private int NumberOfCheckingAccounts ;
 	private int NumberOfSavingsAccounts ;
